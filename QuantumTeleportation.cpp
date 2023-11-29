@@ -123,4 +123,42 @@ int main() {
   amplitude_map = iqs_device.getAmplitudes(qids, {}, 0.01 /*threshold--only display non-zero amplitudes*/);
   FullStateSimulator::displayAmplitudes(amplitude_map);
 
-  // If we look at the
+  // If we look at the conditional probability associated with Bob's qubit
+  // (BellB), we see that it now has the almost same distribution as Alice's
+  // original prepared state, but with a possibility of the result being
+  // swapped.
+  std::cout << "\n==Bob's corresponding probability distribution==\n";
+  std::vector<std::reference_wrapper<qbit>> bob_qid_ref
+      = {std::ref(BellB)};
+  probability_map = iqs_device.getProbabilities(bob_qid_ref, {});
+  FullStateSimulator::displayProbabilities(probability_map);
+
+  // Now we apply corrections, using the results of Alice's measurement to
+  // decide on which corrections to apply.
+  if (AliceBit2) {
+    std::cout << "Applying X\n";
+    xBob();
+  }
+  if (AliceBit1) {
+    std::cout << "Applying Z\n";
+    zBob();
+  }
+
+  // After applying these corrections, we can project out the relevant
+  // amplitudes and should get the same result as Alice's original prepared
+  // state, up to a global phase
+  std::cout << "\n==Bob's state after corrections have been applied==\n";
+  // `bases` will expand into |AliceBit1 AliceBit2 0> and |AliceBit1 AliceBit2 1>
+  std::vector<int> pattern = {AliceBit1, AliceBit2, QssIndex::Wildcard};
+  std::vector<QssIndex> bases = QssIndex::patternToIndices(pattern);
+  amplitude_map = iqs_device.getAmplitudes(qids, bases);
+  FullStateSimulator::displayAmplitudes(amplitude_map);
+
+  // The resulting probability distribution should be equivalent to Alice's
+  // initial probability distribution
+  std::cout << "\n==Bob's corresponding probability distribution==\n";
+  probability_map = iqs_device.getProbabilities(bob_qid_ref, {});
+  FullStateSimulator::displayProbabilities(probability_map);
+
+  return 0;
+}

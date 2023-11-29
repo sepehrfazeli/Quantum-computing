@@ -1,49 +1,36 @@
-#include <iostream>
-#include <vector>
-#include <complex>
-#include <IQS.h>
-
-// Define qubits
-qubit qubitA, qubitB, entangledPair;
-
-// Quantum Teleportation function
-quantum_kernel void QuantumTeleportation() {
-    // Apply Hadamard gate to qubitA
-    H(qubitA);
-
-    // Apply CNOT gate with qubitA as the control and entangledPair as the target
-    CNOT(qubitA, entangledPair);
-
-    // Apply Hadamard gate to qubitA
-    H(qubitA);
-
-    // Measure qubitA and entangledPair
-    cbit resultA, resultB;
-    MeasZ(qubitA, resultA);
-    MeasZ(entangledPair, resultB);
-
-    // Apply Pauli X and/or Z gates based on measurement results
-    if (resultA)
-        X(qubitB);
-    if (resultB)
-        Z(qubitB);
-}
+#include "qhipster/IqsSimulator.h"
 
 int main() {
-    // Initialize qubits
-    InitializeQubits(3);
+  // Create a quantum register with 3 qubits
+  iqs::QubitRegister<ComplexDP> psi(3);
 
-    // Define qubits
-    qubitA = q[0];
-    qubitB = q[1];
-    entangledPair = q[2];
+  // Prepare an entangled pair
+  psi.ApplyHadamard(1);
+  psi.ApplyCPauliZ(1, 2);
 
-    // Create the circuit
-    QuantumTeleportation();
+  // Apply Hadamard gate to qubitA
+  psi.ApplyHadamard(0);
 
-    // Display the circuit
-    std::cout << "Quantum Teleportation Circuit:" << std::endl;
-    DisplayLatex();
+  // Apply CNOT gate with qubitA as the control and entangledPair as the target
+  psi.ApplyCPauliX(0, 1);
 
-    return 0;
+  // Apply Hadamard gate to qubitA
+  psi.ApplyHadamard(0);
+
+  // Measure qubitA and entangledPair
+  auto resultA = psi.Measure(0);
+  auto resultEntangled = psi.Measure(1);
+
+  // Apply Pauli X and/or Z gates based on measurement results
+  if (resultEntangled == 1) {
+    psi.ApplyPauliZ(2);
+  }
+  if (resultA == 1) {
+    psi.ApplyPauliX(2);
+  }
+
+  // Print the final state
+  psi.Print("Final state:");
+
+  return 0;
 }

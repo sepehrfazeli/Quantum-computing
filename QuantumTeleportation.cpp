@@ -1,44 +1,44 @@
-// #include "qhipster/IqsSimulator.h"
-// Import the Python library with the C++ class and methods of Intel Quantum Simulator.
-// If the library is not contained in the same folder of this notebook, its path has to be added.
-import sys
-sys.path.insert(0, '../lib_python')
-import intelqs as simulator
+// Include the IQS header file and the standard C++ libraries
+#include <iostream>
+#include "qureg.hpp"
 
-//  Import NumPy library with Intel specialization.
-import numpy as np
-from numpy import random_intel
+using namespace std;
+using namespace iqs;
 
-//  Import graphical library for plots.
-import matplotlib.pyplot as plt
+int main()
+{
+    // Declare the number of qubits and create a quantum register object
+    int num_qubits = 3;
+    QubitRegister<ComplexDP> psi(num_qubits);
 
-// Create a quantum register with 3 qubits
-iqs::QubitRegister<ComplexDP> psi(3);
+    // Initialize the quantum register to the |000> state
+    psi.Initialize("base", 0);
 
-// Prepare an entangled pair
-psi.ApplyHadamard(1);
-psi.ApplyCPauliZ(1, 2);
+    // Create an entangled pair of qubits using a Hadamard gate and a CNOT gate
+    psi.ApplyHadamard(1);
+    psi.ApplyCPauliX(1, 2);
 
-// Apply Hadamard gate to qubitA
-psi.ApplyHadamard(0);
+    // Apply a CNOT gate and a Hadamard gate to the qubit that you want to teleport
+    psi.ApplyCPauliX(0, 1);
+    psi.ApplyHadamard(0);
 
-// Apply CNOT gate with qubitA as the control and entangledPair as the target
-psi.ApplyCPauliX(0, 1);
+    // Measure the qubits and store the results in classical bits
+    int m0 = psi.Measure(0);
+    int m1 = psi.Measure(1);
 
-// Apply Hadamard gate to qubitA
-psi.ApplyHadamard(0);
+    // Apply conditional gates to the qubit that receives the teleported state based on the measurement results
+    if (m1 == 1)
+    {
+        psi.ApplyPauliX(2);
+    }
+    if (m0 == 1)
+    {
+        psi.ApplyPauliZ(2);
+    }
 
-// Measure qubitA and entangledPair
-auto resultA = psi.Measure(0);
-auto resultEntangled = psi.Measure(1);
+    // Print the final state of the quantum register
+    cout << "The final state of the quantum register is: " << endl;
+    psi.Print();
 
-// Apply Pauli X and/or Z gates based on measurement results
-if (resultEntangled == 1) {
-  psi.ApplyPauliZ(2);
+    return 0;
 }
-if (resultA == 1) {
-  psi.ApplyPauliX(2);
-}
-
-// Print the final state
-psi.Print("Final state:");
